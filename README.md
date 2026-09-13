@@ -111,7 +111,6 @@ house-prices-simple-polynomial-regression/
 │   └── train_model.py
 ├── app.py
 ├── .gitignore
-├── environment.yml
 ├── requirements-dev.txt
 ├── requirements.txt
 └── README.md
@@ -181,5 +180,7 @@ python -m streamlit run app.py
 ```
 
 Streamlit Community Cloud installs the lean runtime-only `requirements.txt`. Notebook, plotting, and test tools remain isolated in `requirements-dev.txt` for local development and CI.
+
+For Streamlit Community Cloud, select this repository, the `main` branch, and `app.py` as the entrypoint. The app requires no secrets or additional system packages.
 
 The app reads the selected degree from `outputs/metrics.json` and trains that polynomial model. It includes the preserved **emoji price filter** (`🌱`, `🏡`, `✨`, `👑`) for exploring comparable training homes. The filter changes only the displayed examples; it does not change or retrain the model.
