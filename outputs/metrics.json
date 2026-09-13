@@ -21,14 +21,6 @@
       "folds": 5
     }
   ],
-  "train_rows_after_outlier_removal": 1458,
-  "validation_rows": 292,
-  "removed_outliers": 2,
-  "raw_features_used": 20,
-  "model_features": 16,
-  "polynomial_features": 16,
-  "final_degree": 1,
-  "random_state": 42,
   "holdout_degree_comparison": [
     {
       "degree": 1,
@@ -46,5 +38,13 @@
     }
   ],
   "selection_metric": "CV_RMSE",
-  "best_degree": 1
+  "train_rows_after_outlier_removal": 1458,
+  "validation_rows": 292,
+  "removed_outliers": 2,
+  "raw_features_used": 20,
+  "model_features": 16,
+  "polynomial_features": 16,
+  "best_degree": 1,
+  "final_degree": 1,
+  "random_state": 42
 }

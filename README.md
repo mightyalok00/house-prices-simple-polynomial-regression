@@ -72,7 +72,7 @@ These are local validation results, **not a Kaggle leaderboard score**. The sele
 ## Repository structure
 
 ```text
-house-prices-advanced-regression-techniques/
+house-prices-simple-polynomial-regression/
 ├── train.csv
 ├── test.csv
 ├── sample_submission.csv
