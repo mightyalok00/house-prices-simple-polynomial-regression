@@ -1,4 +1,4 @@
-"""Train and evaluate the improved degree-2 polynomial regression model."""
+"""Train degrees 1 and 2, then select the better polynomial regression model."""
 
 from pathlib import Path
 import json
@@ -16,6 +16,7 @@ from modeling import (
     predict_prices,
     prepare_features,
     regression_metrics,
+    select_best_degree,
 )
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -78,29 +79,51 @@ def main() -> None:
         X, y, row_ids, test_size=0.20, random_state=42
     )
 
-    fitted = fit_model(X_train, y_train, degree=2)
-    valid_pred = predict_prices(fitted, X_valid)
-    holdout_metrics = regression_metrics(y_valid, valid_pred)
-    save_diagnostics(y_valid, valid_pred, id_valid)
-
     degree_comparison = cross_validate_degrees(X, y, degrees=(1, 2), n_splits=5)
+    best_degree = select_best_degree(degree_comparison, metric="CV_RMSE")
     pd.DataFrame(degree_comparison).to_csv(
         OUTPUTS / "degree_comparison.csv", index=False
     )
 
+    holdout_comparison = []
+    holdout_predictions = {}
+    for degree in (1, 2):
+        fitted = fit_model(X_train, y_train, degree=degree)
+        predicted = predict_prices(fitted, X_valid)
+        holdout_predictions[degree] = predicted
+        holdout_comparison.append(
+            {
+                "degree": degree,
+                **regression_metrics(y_valid, predicted),
+                "polynomial_features": int(fitted[1].n_output_features_),
+            }
+        )
+    pd.DataFrame(holdout_comparison).to_csv(
+        OUTPUTS / "holdout_degree_comparison.csv", index=False
+    )
+    selected_holdout = next(
+        result for result in holdout_comparison if result["degree"] == best_degree
+    )
+    save_diagnostics(y_valid, holdout_predictions[best_degree], id_valid)
+
     metrics = {
-        **holdout_metrics,
+        "MAE": selected_holdout["MAE"],
+        "RMSE": selected_holdout["RMSE"],
+        "R2": selected_holdout["R2"],
         "target_transform": "log1p",
         "validation_method": "80/20 holdout",
         "cross_validation_folds": 5,
         "degree_comparison": degree_comparison,
+        "holdout_degree_comparison": holdout_comparison,
+        "selection_metric": "CV_RMSE",
         "train_rows_after_outlier_removal": int(len(modeling_train)),
         "validation_rows": int(len(X_valid)),
         "removed_outliers": int(flagged_outliers.sum()),
         "raw_features_used": 20,
         "model_features": len(MODEL_FEATURES),
-        "polynomial_features": int(fitted[1].n_output_features_),
-        "final_degree": 2,
+        "polynomial_features": selected_holdout["polynomial_features"],
+        "best_degree": best_degree,
+        "final_degree": best_degree,
         "random_state": 42,
     }
     (OUTPUTS / "metrics.json").write_text(
@@ -108,11 +131,19 @@ def main() -> None:
     )
     print(json.dumps(metrics, indent=2))
 
-    final_fitted = fit_model(X, y, degree=2)
-    test_pred = predict_prices(final_fitted, prepare_features(test))
-    submission = pd.DataFrame({"Id": test["Id"], TARGET: test_pred})
+    test_features = prepare_features(test)
+    submissions = {}
+    for degree in (1, 2):
+        fitted = fit_model(X, y, degree=degree)
+        test_pred = predict_prices(fitted, test_features)
+        submission = pd.DataFrame({"Id": test["Id"], TARGET: test_pred})
+        submission.to_csv(OUTPUTS / f"degree_{degree}_submission.csv", index=False)
+        submissions[degree] = submission
+
+    submission = submissions[best_degree]
     submission.to_csv(OUTPUTS / "polynomial_submission.csv", index=False)
-    print(f"Saved: {OUTPUTS / 'polynomial_submission.csv'}")
+    print(f"Selected degree {best_degree} using lowest five-fold CV RMSE.")
+    print(f"Saved selected submission: {OUTPUTS / 'polynomial_submission.csv'}")
 
 
 if __name__ == "__main__":

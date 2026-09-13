@@ -1,7 +1,7 @@
 {
-  "MAE": 17464.3,
-  "RMSE": 24112.02,
-  "R2": 0.8947,
+  "MAE": 17957.65,
+  "RMSE": 24450.04,
+  "R2": 0.8918,
   "target_transform": "log1p",
   "validation_method": "80/20 holdout",
   "cross_validation_folds": 5,
@@ -26,7 +26,25 @@
   "removed_outliers": 2,
   "raw_features_used": 20,
   "model_features": 16,
-  "polynomial_features": 152,
-  "final_degree": 2,
-  "random_state": 42
+  "polynomial_features": 16,
+  "final_degree": 1,
+  "random_state": 42,
+  "holdout_degree_comparison": [
+    {
+      "degree": 1,
+      "MAE": 17957.65,
+      "RMSE": 24450.04,
+      "R2": 0.8918,
+      "polynomial_features": 16
+    },
+    {
+      "degree": 2,
+      "MAE": 17464.3,
+      "RMSE": 24112.02,
+      "R2": 0.8947,
+      "polynomial_features": 152
+    }
+  ],
+  "selection_metric": "CV_RMSE",
+  "best_degree": 1
 }

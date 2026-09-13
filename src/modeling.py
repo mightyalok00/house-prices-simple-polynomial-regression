@@ -143,3 +143,14 @@ def cross_validate_degrees(
             }
         )
     return results
+
+
+def select_best_degree(
+    results: list[dict[str, float | int]], metric: str = "CV_RMSE"
+) -> int:
+    """Select the degree with the lowest cross-validated error metric."""
+    if not results:
+        raise ValueError("At least one degree result is required.")
+    if metric not in results[0]:
+        raise ValueError(f"Unknown selection metric: {metric}")
+    return int(min(results, key=lambda result: float(result[metric]))["degree"])

@@ -1,7 +1,7 @@
 # Project Objective and Questions
 
 ## Objective
-Build and explain a simple degree-2 polynomial regression model that predicts `SalePrice` from a small, interpretable set of numeric house attributes, while demonstrating core Python data structures and a clean train/validation workflow.
+Build and compare degree-1 and degree-2 polynomial regression models that predict `SalePrice` from interpretable numeric house attributes, then select the better degree using five-fold cross-validated RMSE.
 
 ## 12 portfolio questions
 1. What are the dataset dimensions, target variable, and basic data types?
@@ -10,9 +10,9 @@ Build and explain a simple degree-2 polynomial regression model that predicts `S
 4. Are there missing values in the selected training and test features?
 5. How can a Python list be used to manage the selected feature names cleanly?
 6. What does an 80/20 train-validation split accomplish, and why use `random_state=42`?
-7. What new terms are created by a degree-2 polynomial transformation?
-8. How many model features exist before and after polynomial expansion?
+7. What terms are created by degree 1 versus degree 2?
+8. Why does degree 1 use 16 terms while degree 2 uses 152?
 9. How is plain `LinearRegression` fitted to the polynomial feature matrix?
 10. What do MAE, RMSE, and R² say about validation performance?
 11. How can a dictionary store model metrics and be exported as JSON?
-12. How can the trained method be refit on all training rows to produce a Kaggle-format `Id,SalePrice` submission?
+12. Why is degree 1 selected by five-fold CV even though degree 2 is slightly better on one holdout split?

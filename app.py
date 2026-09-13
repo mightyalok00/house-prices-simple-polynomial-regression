@@ -1,5 +1,6 @@
 """Streamlit app for the beginner House Prices polynomial regression project."""
 from pathlib import Path
+import json
 
 import pandas as pd
 import streamlit as st
@@ -15,6 +16,7 @@ from src.modeling import (
 
 ROOT = Path(__file__).resolve().parent
 TRAIN_PATH = ROOT / "train.csv"
+METRICS_PATH = ROOT / "outputs" / "metrics.json"
 
 APP_INPUT_FEATURES = [
     "OverallQual",
@@ -42,12 +44,25 @@ def load_training_data() -> pd.DataFrame:
     return pd.read_csv(TRAIN_PATH)
 
 
+def load_selected_degree() -> int:
+    """Read the degree selected by the reproducible training comparison."""
+    if not METRICS_PATH.exists():
+        raise FileNotFoundError(
+            "Missing outputs/metrics.json. Run python src/train_model.py first."
+        )
+    metrics = json.loads(METRICS_PATH.read_text(encoding="utf-8"))
+    degree = int(metrics["best_degree"])
+    if degree not in (1, 2):
+        raise ValueError("The selected polynomial degree must be 1 or 2.")
+    return degree
+
+
 @st.cache_resource
-def train_simple_model(train_df: pd.DataFrame):
-    """Fit the same log-target degree-2 polynomial regression used by training."""
+def train_selected_model(train_df: pd.DataFrame, degree: int):
+    """Fit the degree selected by five-fold cross-validation."""
     modeling_data = train_df.loc[~outlier_mask(train_df)].reset_index(drop=True)
     return fit_model(
-        prepare_features(modeling_data), modeling_data[TARGET], degree=2
+        prepare_features(modeling_data), modeling_data[TARGET], degree=degree
     )
 
 
@@ -68,16 +83,17 @@ def apply_emoji_price_filter(df: pd.DataFrame, option: str) -> pd.DataFrame:
 
 try:
     train_df = load_training_data()
+    selected_degree = load_selected_degree()
 except Exception as exc:
     st.error(f"Could not load the training data: {exc}")
     st.stop()
 
-fitted_model = train_simple_model(train_df)
+fitted_model = train_selected_model(train_df, selected_degree)
 
-st.title("🏠 House Price Prediction — Simple Polynomial Regression")
+st.title("🏠 House Price Prediction — Selected Polynomial Regression")
 st.caption(
-    "A transparent degree-2 polynomial regression with domain features, median "
-    "imputation, feature scaling, and a log-transformed price target."
+    f"Degree {selected_degree} was selected using the lowest five-fold CV RMSE. "
+    "The model uses domain features, median imputation, scaling, and a log-price target."
 )
 
 with st.sidebar:
@@ -187,8 +203,8 @@ with st.expander("🧠 How this model works"):
 1. Uses 16 understandable numeric and domain-derived house features.
 2. Creates transparent domain features such as total area, house age, and total bathrooms.
 3. Replaces missing values with training medians and scales the polynomial terms.
-4. Expands the inputs into degree-2 squared and interaction terms.
-5. Fits `LinearRegression` to `log1p(SalePrice)` and converts predictions back to dollars.
+4. Trains both degrees 1 and 2 and selects the lower five-fold cross-validation RMSE.
+5. Fits the selected `LinearRegression` model to `log1p(SalePrice)` and converts predictions back to dollars.
 
 This project intentionally avoids advanced models and hyperparameter tuning.
 """
