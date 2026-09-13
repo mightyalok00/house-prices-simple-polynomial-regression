@@ -3,14 +3,20 @@ from pathlib import Path
 
 import pandas as pd
 import streamlit as st
-from sklearn.impute import SimpleImputer
-from sklearn.linear_model import LinearRegression
-from sklearn.preprocessing import PolynomialFeatures
+
+from src.modeling import (
+    RAW_FEATURES,
+    TARGET,
+    fit_model,
+    outlier_mask,
+    predict_prices,
+    prepare_features,
+)
 
 ROOT = Path(__file__).resolve().parent
 TRAIN_PATH = ROOT / "train.csv"
 
-FEATURES = [
+APP_INPUT_FEATURES = [
     "OverallQual",
     "GrLivArea",
     "GarageCars",
@@ -18,7 +24,6 @@ FEATURES = [
     "FullBath",
     "YearBuilt",
 ]
-TARGET = "SalePrice"
 
 st.set_page_config(
     page_title="House Price Polynomial Regression",
@@ -39,19 +44,11 @@ def load_training_data() -> pd.DataFrame:
 
 @st.cache_resource
 def train_simple_model(train_df: pd.DataFrame):
-    """Fit the exact same simple degree-2 polynomial regression used by the project."""
-    X = train_df[FEATURES]
-    y = train_df[TARGET]
-
-    imputer = SimpleImputer(strategy="median")
-    X_clean = imputer.fit_transform(X)
-
-    polynomial = PolynomialFeatures(degree=2, include_bias=False)
-    X_poly = polynomial.fit_transform(X_clean)
-
-    model = LinearRegression()
-    model.fit(X_poly, y)
-    return imputer, polynomial, model
+    """Fit the same log-target degree-2 polynomial regression used by training."""
+    modeling_data = train_df.loc[~outlier_mask(train_df)].reset_index(drop=True)
+    return fit_model(
+        prepare_features(modeling_data), modeling_data[TARGET], degree=2
+    )
 
 
 def apply_emoji_price_filter(df: pd.DataFrame, option: str) -> pd.DataFrame:
@@ -75,12 +72,12 @@ except Exception as exc:
     st.error(f"Could not load the training data: {exc}")
     st.stop()
 
-imputer, polynomial, model = train_simple_model(train_df)
+fitted_model = train_simple_model(train_df)
 
 st.title("🏠 House Price Prediction — Simple Polynomial Regression")
 st.caption(
-    "Beginner-friendly Streamlit demo using only 6 numeric features, degree-2 "
-    "PolynomialFeatures, median imputation, and LinearRegression."
+    "A transparent degree-2 polynomial regression with domain features, median "
+    "imputation, feature scaling, and a log-transformed price target."
 )
 
 with st.sidebar:
@@ -137,16 +134,23 @@ with col3:
         step=1,
     )
 
-input_df = pd.DataFrame(
-    [[overall_qual, gr_liv_area, garage_cars, total_bsmt_sf, full_bath, year_built]],
-    columns=FEATURES,
+input_values = train_df[RAW_FEATURES].median(numeric_only=True).to_dict()
+input_values.update(
+    {
+        "OverallQual": overall_qual,
+        "GrLivArea": gr_liv_area,
+        "GarageCars": garage_cars,
+        "TotalBsmtSF": total_bsmt_sf,
+        "FullBath": full_bath,
+        "YearBuilt": year_built,
+    }
 )
+input_df = pd.DataFrame([input_values], columns=RAW_FEATURES)
 
 if st.button("🚀 Predict Sale Price", type="primary", width="stretch"):
-    clean_input = imputer.transform(input_df)
-    poly_input = polynomial.transform(clean_input)
-    prediction = float(model.predict(poly_input)[0])
-    prediction = max(prediction, 0.0)
+    prediction = float(
+        predict_prices(fitted_model, prepare_features(input_df))[0]
+    )
 
     st.success(f"### 💰 Estimated Sale Price: ${prediction:,.0f}")
     st.info(
@@ -169,7 +173,7 @@ if show_explorer:
         m2.metric("💵 Median price", "—")
         m3.metric("📈 Average price", "—")
 
-    display_columns = ["Id", TARGET] + FEATURES
+    display_columns = ["Id", TARGET] + APP_INPUT_FEATURES
     st.dataframe(
         filtered[display_columns].sort_values(TARGET, ascending=False).head(100),
         width="stretch",
@@ -180,11 +184,11 @@ if show_explorer:
 with st.expander("🧠 How this model works"):
     st.markdown(
         """
-1. Selects six easy-to-understand numeric house features.
-2. Replaces missing feature values with the median from the training data.
-3. Expands the six inputs into degree-2 polynomial and interaction terms.
-4. Fits a standard `LinearRegression` model.
-5. Uses the fitted model to estimate `SalePrice`.
+1. Uses 16 understandable numeric and domain-derived house features.
+2. Creates transparent domain features such as total area, house age, and total bathrooms.
+3. Replaces missing values with training medians and scales the polynomial terms.
+4. Expands the inputs into degree-2 squared and interaction terms.
+5. Fits `LinearRegression` to `log1p(SalePrice)` and converts predictions back to dollars.
 
 This project intentionally avoids advanced models and hyperparameter tuning.
 """

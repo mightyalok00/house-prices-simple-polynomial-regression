@@ -6,7 +6,7 @@ Build and explain a simple degree-2 polynomial regression model that predicts `S
 ## 12 portfolio questions
 1. What are the dataset dimensions, target variable, and basic data types?
 2. What are the mean, median, minimum, maximum, and spread of `SalePrice`?
-3. Which six numeric features will be selected for the simple model, and why?
+3. Which numeric and domain-derived features will be selected for the simple model, and why?
 4. Are there missing values in the selected training and test features?
 5. How can a Python list be used to manage the selected feature names cleanly?
 6. What does an 80/20 train-validation split accomplish, and why use `random_state=42`?

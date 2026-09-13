@@ -3,44 +3,46 @@
 A clean, beginner-friendly machine-learning portfolio project using the Kaggle **House Prices: Advanced Regression Techniques** dataset, but intentionally applying a **simple degree-2 polynomial regression** model rather than advanced ensembles.
 
 ## Project goal
-Predict `SalePrice` using a small set of easy-to-explain numeric housing features while demonstrating a correct regression workflow: understand the data, split it, handle missing values safely, create polynomial terms, train a linear regression model, evaluate it, and create a Kaggle-format submission.
+Predict `SalePrice` with carefully selected numeric and domain-derived housing features while demonstrating a correct regression workflow: inspect the data, document outlier handling, prevent leakage, compare polynomial degrees, evaluate residuals, and create a Kaggle-format submission.
 
 ## Why this project is intentionally simple
 This repository is built to prove understanding rather than hide the workflow behind advanced algorithms. It uses:
 
 - `PolynomialFeatures(degree=2)`
 - `LinearRegression`
-- one reproducible 80/20 train-validation split
+- one reproducible 80/20 holdout plus five-fold cross-validation
 - median imputation learned from the training data
-- six interpretable numeric features
+- standardized polynomial terms for numerical stability
+- a `log1p(SalePrice)` target that is converted back to dollars
+- 16 interpretable model features derived from 20 raw numeric columns
 
 It does **not** use Random Forest, XGBoost, LightGBM, CatBoost, neural networks, automated feature selection, hyperparameter tuning, or stacked models.
 
-## Selected features
+## Data used
 
-| Feature | Why it is useful |
+| Feature group | Examples |
 |---|---|
-| `OverallQual` | Overall material and finish quality |
-| `GrLivArea` | Above-ground living area |
-| `GarageCars` | Garage vehicle capacity |
-| `TotalBsmtSF` | Total basement area |
-| `FullBath` | Number of full bathrooms |
-| `YearBuilt` | Approximate property age/newness |
+| Quality and condition | `OverallQual`, `OverallCond` |
+| Size and rooms | `GrLivArea`, `TotalSF`, `TotRmsAbvGrd`, `BedroomAbvGr` |
+| Garage and amenities | `GarageCars`, `GarageArea`, `Fireplaces` |
+| Age | `HouseAge`, `RemodelAge` |
+| Engineered totals | `TotalBathrooms`, `TotalPorchSF` |
+| Presence indicators | `HasGarage`, `HasBasement`, `HasFireplace` |
 
-Degree 2 expands these 6 inputs into **27 polynomial terms**, including squared terms and pairwise interactions.
+Degree 2 expands the 16 model features into **152 polynomial terms**, including squared terms and pairwise interactions. Two unusually large, low-priced training observations are removed by the documented rule `GrLivArea > 4000 and SalePrice < 300000`.
 
 ## Verified validation result
 Using `random_state=42` and an 80/20 split:
 
 | Metric | Result |
 |---|---:|
-| MAE | $21,267.85 |
-| RMSE | $32,248.79 |
-| R² | 0.8644 |
-| Training rows | 1168 |
+| MAE | $17,464.30 |
+| RMSE | $24,112.02 |
+| R² | 0.8947 |
+| Training rows after documented outlier removal | 1458 |
 | Validation rows | 292 |
 
-These are local validation results, **not a Kaggle leaderboard score**. The purpose is to show a transparent polynomial-regression baseline.
+Five-fold cross-validation is also reported for degrees 1 and 2. It honestly shows that degree 1 currently generalizes slightly better, while degree 2 remains the final model because this project specifically demonstrates squared and interaction terms. These are local results, **not a Kaggle leaderboard score**.
 
 ## Repository structure
 
@@ -59,9 +61,13 @@ house-prices-advanced-regression-techniques/
 │   └── House_Prices_Simple_Polynomial_Regression.ipynb
 ├── outputs/
 │   ├── figures/
+│   ├── degree_comparison.csv
+│   ├── largest_validation_errors.csv
 │   ├── metrics.json
-│   └── polynomial_submission.csv
+│   ├── polynomial_submission.csv
+│   └── validation_residuals.csv
 ├── src/
+│   ├── modeling.py
 │   └── train_model.py
 ├── app.py
 ├── .env.example
@@ -95,7 +101,7 @@ No secret API key is needed for this project.
 python src\train_model.py
 ```
 
-This recreates `outputs/metrics.json` and `outputs/polynomial_submission.csv`.
+This recreates the metrics, degree comparison, residual diagnostics, figures, and Kaggle submission in `outputs/`.
 
 For a step-by-step learning version, open:
 
@@ -107,13 +113,13 @@ notebooks/House_Prices_Simple_Polynomial_Regression.ipynb
 A normal linear model tries to fit a straight relationship. Polynomial regression keeps linear regression as the estimator but first creates extra columns such as `OverallQual²`, `GrLivArea²`, and interactions such as `OverallQual × GrLivArea`. This lets the fitted surface bend while remaining easy to inspect and explain.
 
 ## Data-leakage protection
-The validation workflow fits the median imputer and polynomial transformer on the training split only, then applies those learned transformations to the validation split. This is important because the validation data should not influence training-time preprocessing.
+Each holdout or cross-validation fold fits its median imputer, polynomial transformer, and scaler on training rows only, then applies them to validation rows. This prevents validation data from influencing preprocessing.
 
 ## Portfolio talking points
-In an interview, explain that you deliberately chose a small feature set and degree 2 because the goal was to demonstrate polynomial regression clearly. Mention the difference between MAE, RMSE, and R², why an 80/20 split is used, why preprocessing is learned from training data only, and why a high-degree polynomial can overfit.
+In an interview, explain why the target is log-transformed, how the domain features summarize usable space and age, why preprocessing is learned from training data only, and why five-fold results are more dependable than one holdout. Be candid that degree 1 currently wins cross-validation even though degree 2 is retained for this educational polynomial project.
 
 ## Limitations
-This is a learning baseline, not a competition-winning solution. It ignores many categorical variables, uses only one validation split, does not tune the degree, and can be influenced by outliers. Those limitations are documented intentionally rather than hidden.
+This is a learning project, not a competition-winning solution. It still ignores categorical variables, tests only degrees 1 and 2, and uses a manually chosen outlier rule. Polynomial terms can also extrapolate poorly outside the training range. These limitations are documented rather than hidden.
 
 ## Deep analysis
 See [`docs/DEEP_PROJECT_ANALYSIS.md`](docs/DEEP_PROJECT_ANALYSIS.md) for the detailed data-science reasoning, assumptions, model interpretation, limitations, interview explanation, and improvement roadmap.

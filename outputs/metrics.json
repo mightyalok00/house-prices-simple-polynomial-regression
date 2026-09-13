@@ -1,11 +1,32 @@
 {
-  "MAE": 21267.85,
-  "RMSE": 32248.79,
-  "R2": 0.8644,
-  "train_rows": 1168,
+  "MAE": 17464.3,
+  "RMSE": 24112.02,
+  "R2": 0.8947,
+  "target_transform": "log1p",
+  "validation_method": "80/20 holdout",
+  "cross_validation_folds": 5,
+  "degree_comparison": [
+    {
+      "degree": 1,
+      "CV_MAE": 17661.62,
+      "CV_RMSE": 25784.67,
+      "CV_R2": 0.8925,
+      "folds": 5
+    },
+    {
+      "degree": 2,
+      "CV_MAE": 18089.54,
+      "CV_RMSE": 27150.27,
+      "CV_R2": 0.8799,
+      "folds": 5
+    }
+  ],
+  "train_rows_after_outlier_removal": 1458,
   "validation_rows": 292,
-  "original_features": 6,
-  "polynomial_features": 27,
-  "degree": 2,
+  "removed_outliers": 2,
+  "raw_features_used": 20,
+  "model_features": 16,
+  "polynomial_features": 152,
+  "final_degree": 2,
   "random_state": 42
 }
