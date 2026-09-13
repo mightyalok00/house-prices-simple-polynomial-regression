@@ -5,26 +5,31 @@
   "target_transform": "log1p",
   "validation_method": "80/20 holdout",
   "cross_validation_folds": 5,
+  "cross_validation_repeats": 5,
   "degree_comparison": [
     {
       "degree": 1,
-      "CV_MAE": 17661.62,
-      "CV_RMSE": 25784.67,
-      "CV_RMSE_std": 1921.02,
-      "CV_RMSE_95CI_low": 24100.82,
-      "CV_RMSE_95CI_high": 27468.51,
-      "CV_R2": 0.8925,
-      "folds": 5
+      "CV_MAE": 17685.81,
+      "CV_RMSE": 25773.41,
+      "CV_RMSE_std": 2084.93,
+      "CV_RMSE_95CI_low": 24956.12,
+      "CV_RMSE_95CI_high": 26590.71,
+      "CV_R2": 0.893,
+      "folds": 5,
+      "repeats": 5,
+      "evaluations": 25
     },
     {
       "degree": 2,
-      "CV_MAE": 18089.54,
-      "CV_RMSE": 27150.27,
-      "CV_RMSE_std": 2741.18,
-      "CV_RMSE_95CI_low": 24747.52,
-      "CV_RMSE_95CI_high": 29553.02,
-      "CV_R2": 0.8799,
-      "folds": 5
+      "CV_MAE": 18238.9,
+      "CV_RMSE": 27335.27,
+      "CV_RMSE_std": 2236.92,
+      "CV_RMSE_95CI_low": 26458.4,
+      "CV_RMSE_95CI_high": 28212.14,
+      "CV_R2": 0.8795,
+      "folds": 5,
+      "repeats": 5,
+      "evaluations": 25
     }
   ],
   "holdout_degree_comparison": [
@@ -43,6 +48,16 @@
       "polynomial_features": 152
     }
   ],
+  "paired_degree_comparison": {
+    "definition": "Degree 2 RMSE minus Degree 1 RMSE on identical splits",
+    "mean_RMSE_difference": 1561.86,
+    "difference_95CI": [
+      972.61,
+      2151.1
+    ],
+    "degree_1_win_rate_percent": 84.0,
+    "paired_splits": 25
+  },
   "selection_metric": "CV_RMSE",
   "holdout_bootstrap_intervals": {
     "MAE_95CI": [

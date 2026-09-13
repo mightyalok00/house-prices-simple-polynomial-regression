@@ -9,17 +9,26 @@ import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
-from modeling import (
+from src.config import (
+    BOOTSTRAP_RESAMPLES,
+    CANDIDATE_DEGREES,
+    CV_REPEATS,
+    CV_SPLITS,
+    HOLDOUT_SIZE,
+    RANDOM_STATE,
+    SELECTION_METRIC,
+)
+from src.modeling import (
     MODEL_FEATURES,
     RAW_FEATURES,
     TARGET,
     bootstrap_metric_intervals,
-    cross_validate_degrees,
     fit_model,
     outlier_mask,
     predict_prices,
     prepare_features,
     regression_metrics,
+    repeated_cv_comparison,
     select_best_degree,
 )
 
@@ -82,18 +91,28 @@ def main() -> None:
     y = modeling_train[TARGET]
     row_ids = modeling_train["Id"]
     X_train, X_valid, y_train, y_valid, _, id_valid = train_test_split(
-        X, y, row_ids, test_size=0.20, random_state=42
+        X, y, row_ids, test_size=HOLDOUT_SIZE, random_state=RANDOM_STATE
     )
 
-    degree_comparison = cross_validate_degrees(X, y, degrees=(1, 2), n_splits=5)
-    best_degree = select_best_degree(degree_comparison, metric="CV_RMSE")
+    degree_comparison, fold_results, paired_comparison = repeated_cv_comparison(
+        X,
+        y,
+        degrees=CANDIDATE_DEGREES,
+        n_splits=CV_SPLITS,
+        n_repeats=CV_REPEATS,
+        random_state=RANDOM_STATE,
+    )
+    best_degree = select_best_degree(degree_comparison, metric=SELECTION_METRIC)
     pd.DataFrame(degree_comparison).to_csv(
         OUTPUTS / "degree_comparison.csv", index=False
+    )
+    pd.DataFrame(fold_results).to_csv(
+        OUTPUTS / "repeated_cv_fold_results.csv", index=False
     )
 
     holdout_comparison = []
     holdout_predictions = {}
-    for degree in (1, 2):
+    for degree in CANDIDATE_DEGREES:
         fitted = fit_model(X_train, y_train, degree=degree)
         predicted = predict_prices(fitted, X_valid)
         holdout_predictions[degree] = predicted
@@ -112,7 +131,10 @@ def main() -> None:
     )
     save_diagnostics(y_valid, holdout_predictions[best_degree], id_valid)
     holdout_intervals = bootstrap_metric_intervals(
-        y_valid, holdout_predictions[best_degree]
+        y_valid,
+        holdout_predictions[best_degree],
+        n_resamples=BOOTSTRAP_RESAMPLES,
+        random_state=RANDOM_STATE,
     )
 
     metrics = {
@@ -121,12 +143,14 @@ def main() -> None:
         "R2": selected_holdout["R2"],
         "target_transform": "log1p",
         "validation_method": "80/20 holdout",
-        "cross_validation_folds": 5,
+        "cross_validation_folds": CV_SPLITS,
+        "cross_validation_repeats": CV_REPEATS,
         "degree_comparison": degree_comparison,
         "holdout_degree_comparison": holdout_comparison,
-        "selection_metric": "CV_RMSE",
+        "paired_degree_comparison": paired_comparison,
+        "selection_metric": SELECTION_METRIC,
         "holdout_bootstrap_intervals": holdout_intervals,
-        "bootstrap_resamples": 2_000,
+        "bootstrap_resamples": BOOTSTRAP_RESAMPLES,
         "train_rows_after_outlier_removal": int(len(modeling_train)),
         "validation_rows": int(len(X_valid)),
         "removed_outliers": int(flagged_outliers.sum()),
@@ -135,7 +159,7 @@ def main() -> None:
         "polynomial_features": selected_holdout["polynomial_features"],
         "best_degree": best_degree,
         "final_degree": best_degree,
-        "random_state": 42,
+        "random_state": RANDOM_STATE,
     }
     (OUTPUTS / "metrics.json").write_text(
         json.dumps(metrics, indent=2), encoding="utf-8"
@@ -145,7 +169,7 @@ def main() -> None:
     test_features = prepare_features(test)
     submissions = {}
     fitted_models = {}
-    for degree in (1, 2):
+    for degree in CANDIDATE_DEGREES:
         fitted = fit_model(X, y, degree=degree)
         fitted_models[degree] = fitted
         test_pred = predict_prices(fitted, test_features)
@@ -177,7 +201,7 @@ def main() -> None:
     temporary_path = model_path.with_suffix(".joblib.tmp")
     joblib.dump(artifact, temporary_path)
     temporary_path.replace(model_path)
-    print(f"Selected degree {best_degree} using lowest five-fold CV RMSE.")
+    print(f"Selected degree {best_degree} using lowest repeated-CV RMSE.")
     print(f"Saved selected submission: {OUTPUTS / 'polynomial_submission.csv'}")
 
 

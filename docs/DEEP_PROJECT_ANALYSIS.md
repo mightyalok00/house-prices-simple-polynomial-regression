@@ -3,7 +3,7 @@
 ## 1. Executive summary
 This project predicts residential sale price with a deliberately simple polynomial regression model. The source training table contains **1,460 rows and 81 columns**. The target is `SalePrice`. The project uses 20 raw numeric columns to create 16 understandable model features, including total area, house age, remodel age, total bathrooms, porch area, and simple amenity indicators.
 
-The project trains both degree 1 (16 terms) and degree 2 (152 terms). Five-fold cross-validation selects **degree 1** because it has lower average RMSE (**$25,784.67 vs $27,150.27**) and higher average R² (**0.8925 vs 0.8799**). Degree 2 is narrowly better on the single 80/20 holdout, which demonstrates why the broader cross-validation result is a more dependable selection basis.
+The project trains both degree 1 (16 terms) and degree 2 (152 terms). Five-times repeated five-fold cross-validation selects **degree 1** because it has lower average RMSE (**$25,773.41 vs $27,335.27**) and higher average R² (**0.8930 vs 0.8795**). Degree 1 wins 84% of 25 matched splits; its mean RMSE advantage is $1,561.86 with an approximate 95% interval from $972.61 to $2,151.10.
 
 ## 2. Business problem
 A property-pricing workflow needs a reasonable estimate of sale price from known house attributes. This project asks: can a small collection of structural and quality variables explain a useful portion of sale-price variation without relying on advanced models?
@@ -33,15 +33,15 @@ With 16 model features, degree 1 produces 16 terms and degree 2 produces 152 ter
 
 ## 8. Evaluation
 
-| Degree | 5-fold CV MAE | 5-fold CV RMSE | 5-fold CV R² | Holdout MAE | Holdout RMSE | Holdout R² |
+| Degree | Repeated-CV MAE | Repeated-CV RMSE | Repeated-CV R² | Holdout MAE | Holdout RMSE | Holdout R² |
 |---:|---:|---:|---:|---:|---:|---:|
-| **1** | **$17,661.62** | **$25,784.67** | **0.8925** | $17,957.65 | $24,450.04 | 0.8918 |
-| 2 | $18,089.54 | $27,150.27 | 0.8799 | **$17,464.30** | **$24,112.02** | **0.8947** |
+| **1** | **$17,685.81** | **$25,773.41** | **0.8930** | $17,957.65 | $24,450.04 | 0.8918 |
+| 2 | $18,238.90 | $27,335.27 | 0.8795 | **$17,464.30** | **$24,112.02** | **0.8947** |
 
 MAE is the average absolute dollar error. RMSE penalizes large misses more strongly. R² measures explained variance and is not a percentage accuracy score.
 
 ## 9. Which degree is best?
-Degree 1 is the best choice for this dataset and feature set because it wins the primary five-fold comparison. Degree 2 wins only the secondary holdout by a small margin. Selecting degree 1 reduces the transformed feature count from 152 to 16, lowers average validation error, and avoids unnecessary variance. The code therefore trains both degrees, selects the lowest cross-validated RMSE, and uses degree 1 for the final submission and Streamlit prediction model.
+Degree 1 is the best choice for this dataset and feature set because it wins 84% of 25 paired repeated-CV splits. Degree 2 wins only the secondary holdout by a small margin. Selecting degree 1 reduces the transformed feature count from 152 to 16, lowers average validation error, and avoids unnecessary variance.
 
 ## 10. Interpretation caution
 Polynomial coefficients are harder to explain one-by-one because each original feature appears in multiple terms and the features are on different scales. For a beginner portfolio, the most defensible interpretation is directional and structural: the transformation allows nonlinear and interaction effects, while the validation metrics measure whether that flexibility improves predictive usefulness.
@@ -78,10 +78,10 @@ Using XGBoost or Random Forest would probably improve predictive performance, bu
 ## 16. Interview explanation
 A concise interview explanation:
 
-> I trained polynomial regression at degrees 1 and 2 using the same 16 features, preprocessing, log target, and five folds. Degree 2 was slightly better on one holdout, but degree 1 had the lower five-fold CV RMSE, $25,785 versus $27,150, and higher CV R². I therefore selected degree 1 because repeated validation is more reliable than one split and the simpler model generalizes better.
+> I trained polynomial regression at degrees 1 and 2 using the same 16 features, preprocessing, and log target across 25 matched repeated-CV splits. Degree 1 won 84% of the splits and lowered RMSE by about $1,562 on average, with an approximate 95% interval entirely above zero. I therefore selected the simpler degree.
 
 ## 17. Improvement roadmap without changing the current project's purpose
-Future improvements could repeat cross-validation with alternative outlier rules, add confidence or prediction intervals, and investigate the largest residuals in more detail. Advanced ensemble models should belong in a separate branch or follow-up project so this repository remains focused on polynomial regression.
+Future improvements could test alternative outlier rules, add individual prediction intervals, and investigate the largest residuals in more detail. Advanced ensemble models should belong in a separate branch or follow-up project so this repository remains focused on polynomial regression.
 
 ## 18. Final conclusion
-The project demonstrates a correct and transparent polynomial-regression selection workflow. Degree 1 is the evidence-based winner for the current data because it generalizes better across five folds. The documented disagreement with the single holdout is a strength: it shows why model choice should rely on repeated validation rather than the most favorable isolated score.
+The project demonstrates a correct and transparent polynomial-regression selection workflow. Degree 1 is the evidence-based winner because it generalizes better across 25 matched validation splits. The disagreement with the single holdout is a strength: it shows why model choice should rely on repeated evidence rather than the most favorable isolated score.

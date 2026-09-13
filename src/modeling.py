@@ -7,7 +7,7 @@ import pandas as pd
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
-from sklearn.model_selection import KFold
+from sklearn.model_selection import RepeatedKFold
 from sklearn.preprocessing import PolynomialFeatures, StandardScaler
 
 TARGET = "SalePrice"
@@ -88,6 +88,12 @@ def outlier_mask(df: pd.DataFrame) -> pd.Series:
 
 def fit_model(X: pd.DataFrame, y: pd.Series, degree: int = 2):
     """Fit log-target polynomial regression without an sklearn Pipeline."""
+    if degree not in (1, 2):
+        raise ValueError("Only polynomial degrees 1 and 2 are supported.")
+    if len(X) != len(y) or len(X) == 0:
+        raise ValueError("Features and target must have the same non-zero length.")
+    if y.isna().any() or (y < 0).any():
+        raise ValueError("SalePrice must contain finite, non-negative values.")
     imputer = SimpleImputer(strategy="median")
     polynomial = PolynomialFeatures(degree=degree, include_bias=False)
     scaler = StandardScaler()
@@ -107,7 +113,10 @@ def predict_prices(fitted, X: pd.DataFrame) -> np.ndarray:
     clean = imputer.transform(X)
     expanded = polynomial.transform(clean)
     scaled = scaler.transform(expanded)
-    return np.maximum(np.expm1(model.predict(scaled)), 0.0)
+    predictions = np.maximum(np.expm1(model.predict(scaled)), 0.0)
+    if not np.isfinite(predictions).all():
+        raise ValueError("Model produced a non-finite price prediction.")
+    return predictions
 
 
 def regression_metrics(actual: pd.Series, predicted: np.ndarray) -> dict[str, float]:
@@ -120,34 +129,93 @@ def regression_metrics(actual: pd.Series, predicted: np.ndarray) -> dict[str, fl
 
 
 def cross_validate_degrees(
-    X: pd.DataFrame, y: pd.Series, degrees: tuple[int, ...] = (1, 2), n_splits: int = 5
+    X: pd.DataFrame,
+    y: pd.Series,
+    degrees: tuple[int, ...] = (1, 2),
+    n_splits: int = 5,
+    n_repeats: int = 5,
+    random_state: int = 42,
 ) -> list[dict[str, float | int]]:
-    """Compare polynomial degrees with leakage-safe manual cross-validation."""
-    splitter = KFold(n_splits=n_splits, shuffle=True, random_state=42)
-    results: list[dict[str, float | int]] = []
+    """Summarize leakage-safe repeated cross-validation for each degree."""
+    summaries, _, _ = repeated_cv_comparison(
+        X, y, degrees, n_splits, n_repeats, random_state
+    )
+    return summaries
+
+
+def repeated_cv_comparison(
+    X: pd.DataFrame,
+    y: pd.Series,
+    degrees: tuple[int, ...] = (1, 2),
+    n_splits: int = 5,
+    n_repeats: int = 5,
+    random_state: int = 42,
+) -> tuple[
+    list[dict[str, float | int]],
+    list[dict[str, float | int]],
+    dict[str, float | int | str | list[float]],
+]:
+    """Return repeated-CV summaries, fold results, and paired RMSE evidence."""
+    if tuple(degrees) != (1, 2):
+        raise ValueError("This comparison requires degrees (1, 2).")
+    splitter = RepeatedKFold(
+        n_splits=n_splits, n_repeats=n_repeats, random_state=random_state
+    )
+    splits = list(splitter.split(X))
+    summaries: list[dict[str, float | int]] = []
+    fold_results: list[dict[str, float | int]] = []
     for degree in degrees:
         fold_metrics = []
-        for train_index, valid_index in splitter.split(X):
+        for split_index, (train_index, valid_index) in enumerate(splits):
             fitted = fit_model(X.iloc[train_index], y.iloc[train_index], degree=degree)
             predicted = predict_prices(fitted, X.iloc[valid_index])
-            fold_metrics.append(regression_metrics(y.iloc[valid_index], predicted))
+            metrics = regression_metrics(y.iloc[valid_index], predicted)
+            fold_metrics.append(metrics)
+            fold_results.append(
+                {
+                    "degree": degree,
+                    "repeat": split_index // n_splits + 1,
+                    "fold": split_index % n_splits + 1,
+                    **metrics,
+                }
+            )
+        evaluations = n_splits * n_repeats
         rmse_values = np.array([m["RMSE"] for m in fold_metrics], dtype=float)
-        rmse_margin = 1.96 * float(rmse_values.std(ddof=1)) / np.sqrt(n_splits)
-        results.append(
+        rmse_margin = 1.96 * float(rmse_values.std(ddof=1)) / np.sqrt(evaluations)
+        summaries.append(
             {
                 "degree": degree,
                 "CV_MAE": round(float(np.mean([m["MAE"] for m in fold_metrics])), 2),
-                "CV_RMSE": round(
-                    float(rmse_values.mean()), 2
-                ),
+                "CV_RMSE": round(float(rmse_values.mean()), 2),
                 "CV_RMSE_std": round(float(rmse_values.std(ddof=1)), 2),
                 "CV_RMSE_95CI_low": round(float(rmse_values.mean() - rmse_margin), 2),
                 "CV_RMSE_95CI_high": round(float(rmse_values.mean() + rmse_margin), 2),
                 "CV_R2": round(float(np.mean([m["R2"] for m in fold_metrics])), 4),
                 "folds": n_splits,
+                "repeats": n_repeats,
+                "evaluations": evaluations,
             }
         )
-    return results
+
+    degree_1_rmse = np.array(
+        [row["RMSE"] for row in fold_results if row["degree"] == 1], dtype=float
+    )
+    degree_2_rmse = np.array(
+        [row["RMSE"] for row in fold_results if row["degree"] == 2], dtype=float
+    )
+    differences = degree_2_rmse - degree_1_rmse
+    margin = 1.96 * float(differences.std(ddof=1)) / np.sqrt(len(differences))
+    paired = {
+        "definition": "Degree 2 RMSE minus Degree 1 RMSE on identical splits",
+        "mean_RMSE_difference": round(float(differences.mean()), 2),
+        "difference_95CI": [
+            round(float(differences.mean() - margin), 2),
+            round(float(differences.mean() + margin), 2),
+        ],
+        "degree_1_win_rate_percent": round(float(np.mean(differences > 0) * 100), 1),
+        "paired_splits": int(len(differences)),
+    }
+    return summaries, fold_results, paired
 
 
 def bootstrap_metric_intervals(

@@ -103,7 +103,7 @@ except Exception as exc:
 
 st.title("🏠 House Price Prediction — Selected Polynomial Regression")
 st.caption(
-    f"Degree {selected_degree} was selected using the lowest five-fold CV RMSE. "
+    f"Degree {selected_degree} was selected using the lowest repeated-CV RMSE. "
     "The model uses domain features, median imputation, scaling, and a log-price target."
 )
 
@@ -214,7 +214,7 @@ with st.expander("🧠 How this model works"):
 1. Uses 16 understandable numeric and domain-derived house features.
 2. Creates transparent domain features such as total area, house age, and total bathrooms.
 3. Replaces missing values with training medians and scales the polynomial terms.
-4. Trains both degrees 1 and 2 and selects the lower five-fold cross-validation RMSE.
+4. Trains both degrees 1 and 2 across 25 matched repeated-CV splits.
 5. Fits the selected `LinearRegression` model to `log1p(SalePrice)` and converts predictions back to dollars.
 
 This project intentionally avoids advanced models and hyperparameter tuning.

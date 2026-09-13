@@ -9,6 +9,7 @@ from src.modeling import (
     fit_model,
     predict_prices,
     prepare_features,
+    repeated_cv_comparison,
     select_best_degree,
 )
 
@@ -42,3 +43,23 @@ def test_selection_and_bootstrap_are_reproducible():
     first = bootstrap_metric_intervals(actual, predicted, n_resamples=100)
     second = bootstrap_metric_intervals(actual, predicted, n_resamples=100)
     assert first == second
+
+
+def test_repeated_cv_returns_paired_evidence():
+    train = pd.read_csv("train.csv", nrows=80)
+    summaries, folds, paired = repeated_cv_comparison(
+        prepare_features(train),
+        train["SalePrice"],
+        n_splits=2,
+        n_repeats=2,
+    )
+    assert len(summaries) == 2
+    assert len(folds) == 8
+    assert paired["paired_splits"] == 4
+    assert len(paired["difference_95CI"]) == 2
+
+
+def test_model_rejects_unsupported_degree():
+    train = pd.read_csv("train.csv", nrows=10)
+    with pytest.raises(ValueError, match="degrees 1 and 2"):
+        fit_model(prepare_features(train), train["SalePrice"], degree=3)

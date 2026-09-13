@@ -1,7 +1,7 @@
 # Project Objective and Questions
 
 ## Objective
-Build and compare degree-1 and degree-2 polynomial regression models that predict `SalePrice` from interpretable numeric house attributes, then select the better degree using five-fold cross-validated RMSE.
+Build and compare degree-1 and degree-2 polynomial regression models that predict `SalePrice` from interpretable numeric house attributes, then select the better degree using five-times repeated five-fold cross-validated RMSE.
 
 ## 12 portfolio questions
 1. What are the dataset dimensions, target variable, and basic data types?
@@ -15,4 +15,4 @@ Build and compare degree-1 and degree-2 polynomial regression models that predic
 9. How is plain `LinearRegression` fitted to the polynomial feature matrix?
 10. What do MAE, RMSE, and R² say about validation performance?
 11. How can a dictionary store model metrics and be exported as JSON?
-12. Why is degree 1 selected by five-fold CV even though degree 2 is slightly better on one holdout split?
+12. Why is degree 1 selected after 25 paired CV splits even though degree 2 is slightly better on one holdout split?
