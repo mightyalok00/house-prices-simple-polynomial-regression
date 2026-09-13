@@ -1,0 +1,11 @@
+{
+  "MAE": 21267.85,
+  "RMSE": 32248.79,
+  "R2": 0.8644,
+  "train_rows": 1168,
+  "validation_rows": 292,
+  "original_features": 6,
+  "polynomial_features": 27,
+  "degree": 2,
+  "random_state": 42
+}

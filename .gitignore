@@ -1,0 +1,34 @@
+# Python bytecode / caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Local environment / secrets
+.env
+*.env
+!.env.example
+
+# Streamlit local secrets
+.streamlit/secrets.toml
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Generated model artifacts
+models/*.pkl
+models/*.joblib
+
+# Optional local outputs that can be recreated
+outputs/*.tmp
+
+# Logs
+*.log
