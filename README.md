@@ -53,6 +53,10 @@ The independent 80/20 holdout gives a useful secondary check:
 
 The result also shows that the 152-term degree-2 model adds complexity without improving average generalization. Degree 1 is therefore the more accurate and parsimonious choice for this feature set.
 
+The comparison also reports the standard deviation and approximate 95% confidence interval of fold RMSE. The selected holdout metrics include reproducible bootstrap confidence intervals, so the evaluation communicates uncertainty instead of presenting point estimates alone.
+
+For Degree 1, the strongest standardized log-price coefficients are `TotalSF` (+0.1461), `HouseAge` (-0.1061), `OverallQual` (+0.0915), `OverallCond` (+0.0641), and `GrLivArea` (+0.0495). These are associations within the fitted model, not causal effects; correlated housing features can share or redistribute coefficient weight.
+
 See the illustrated [degree 1 vs degree 2 comparison report](docs/degree_1_vs_degree_2_comparison.pdf) for the full evidence and decision rationale.
 
 ## Selected-model result
@@ -94,7 +98,13 @@ house-prices-simple-polynomial-regression/
 │   ├── largest_validation_errors.csv
 │   ├── metrics.json
 │   ├── polynomial_submission.csv
+│   ├── selected_model_coefficients.csv
 │   └── validation_residuals.csv
+├── models/
+│   └── selected_polynomial_model.joblib
+├── tests/
+│   ├── test_app.py
+│   └── test_modeling.py
 ├── src/
 │   ├── modeling.py
 │   └── train_model.py
@@ -131,6 +141,16 @@ python src\train_model.py
 ```
 
 This trains both degrees, selects the lowest five-fold CV RMSE, and recreates both submissions, the selected submission, metrics, residual diagnostics, and figures in `outputs/`.
+
+It also saves the validated selected model to `models/selected_polynomial_model.joblib`. The Streamlit app loads this artifact rather than retraining during startup. Standardized coefficients are exported to `outputs/selected_model_coefficients.csv` for transparent Degree 1 interpretation.
+
+Run the automated verification suite with:
+
+```powershell
+python -m pytest -q
+```
+
+GitHub Actions repeats compilation and tests after every push and pull request.
 
 For a step-by-step learning version, open:
 

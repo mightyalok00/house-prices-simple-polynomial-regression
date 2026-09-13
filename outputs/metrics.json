@@ -10,6 +10,9 @@
       "degree": 1,
       "CV_MAE": 17661.62,
       "CV_RMSE": 25784.67,
+      "CV_RMSE_std": 1921.02,
+      "CV_RMSE_95CI_low": 24100.82,
+      "CV_RMSE_95CI_high": 27468.51,
       "CV_R2": 0.8925,
       "folds": 5
     },
@@ -17,6 +20,9 @@
       "degree": 2,
       "CV_MAE": 18089.54,
       "CV_RMSE": 27150.27,
+      "CV_RMSE_std": 2741.18,
+      "CV_RMSE_95CI_low": 24747.52,
+      "CV_RMSE_95CI_high": 29553.02,
       "CV_R2": 0.8799,
       "folds": 5
     }
@@ -38,6 +44,17 @@
     }
   ],
   "selection_metric": "CV_RMSE",
+  "holdout_bootstrap_intervals": {
+    "MAE_95CI": [
+      16101.47,
+      19988.59
+    ],
+    "RMSE_95CI": [
+      21813.44,
+      27153.76
+    ]
+  },
+  "bootstrap_resamples": 2000,
   "train_rows_after_outlier_removal": 1458,
   "validation_rows": 292,
   "removed_outliers": 2,

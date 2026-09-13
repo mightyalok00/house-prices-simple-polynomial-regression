@@ -131,18 +131,48 @@ def cross_validate_degrees(
             fitted = fit_model(X.iloc[train_index], y.iloc[train_index], degree=degree)
             predicted = predict_prices(fitted, X.iloc[valid_index])
             fold_metrics.append(regression_metrics(y.iloc[valid_index], predicted))
+        rmse_values = np.array([m["RMSE"] for m in fold_metrics], dtype=float)
+        rmse_margin = 1.96 * float(rmse_values.std(ddof=1)) / np.sqrt(n_splits)
         results.append(
             {
                 "degree": degree,
                 "CV_MAE": round(float(np.mean([m["MAE"] for m in fold_metrics])), 2),
                 "CV_RMSE": round(
-                    float(np.mean([m["RMSE"] for m in fold_metrics])), 2
+                    float(rmse_values.mean()), 2
                 ),
+                "CV_RMSE_std": round(float(rmse_values.std(ddof=1)), 2),
+                "CV_RMSE_95CI_low": round(float(rmse_values.mean() - rmse_margin), 2),
+                "CV_RMSE_95CI_high": round(float(rmse_values.mean() + rmse_margin), 2),
                 "CV_R2": round(float(np.mean([m["R2"] for m in fold_metrics])), 4),
                 "folds": n_splits,
             }
         )
     return results
+
+
+def bootstrap_metric_intervals(
+    actual: pd.Series,
+    predicted: np.ndarray,
+    n_resamples: int = 2_000,
+    random_state: int = 42,
+) -> dict[str, list[float]]:
+    """Return reproducible 95% bootstrap intervals for holdout MAE and RMSE."""
+    actual_values = np.asarray(actual, dtype=float)
+    predicted_values = np.asarray(predicted, dtype=float)
+    if len(actual_values) != len(predicted_values) or len(actual_values) == 0:
+        raise ValueError("Actual and predicted values must have the same non-zero length.")
+    rng = np.random.default_rng(random_state)
+    mae_samples = np.empty(n_resamples)
+    rmse_samples = np.empty(n_resamples)
+    for index in range(n_resamples):
+        sample = rng.integers(0, len(actual_values), len(actual_values))
+        errors = actual_values[sample] - predicted_values[sample]
+        mae_samples[index] = np.mean(np.abs(errors))
+        rmse_samples[index] = np.sqrt(np.mean(errors**2))
+    return {
+        "MAE_95CI": [round(float(v), 2) for v in np.percentile(mae_samples, [2.5, 97.5])],
+        "RMSE_95CI": [round(float(v), 2) for v in np.percentile(rmse_samples, [2.5, 97.5])],
+    }
 
 
 def select_best_degree(

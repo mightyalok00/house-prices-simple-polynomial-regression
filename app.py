@@ -3,13 +3,12 @@ from pathlib import Path
 import json
 
 import pandas as pd
+import joblib
 import streamlit as st
 
 from src.modeling import (
     RAW_FEATURES,
     TARGET,
-    fit_model,
-    outlier_mask,
     predict_prices,
     prepare_features,
 )
@@ -17,6 +16,7 @@ from src.modeling import (
 ROOT = Path(__file__).resolve().parent
 TRAIN_PATH = ROOT / "train.csv"
 METRICS_PATH = ROOT / "outputs" / "metrics.json"
+MODEL_PATH = ROOT / "models" / "selected_polynomial_model.joblib"
 
 APP_INPUT_FEATURES = [
     "OverallQual",
@@ -58,12 +58,19 @@ def load_selected_degree() -> int:
 
 
 @st.cache_resource
-def train_selected_model(train_df: pd.DataFrame, degree: int):
-    """Fit the degree selected by five-fold cross-validation."""
-    modeling_data = train_df.loc[~outlier_mask(train_df)].reset_index(drop=True)
-    return fit_model(
-        prepare_features(modeling_data), modeling_data[TARGET], degree=degree
-    )
+def load_selected_model(degree: int):
+    """Load and validate the versioned model produced by the training script."""
+    if not MODEL_PATH.exists():
+        raise FileNotFoundError(
+            "Missing models/selected_polynomial_model.joblib. "
+            "Run python src/train_model.py first."
+        )
+    artifact = joblib.load(MODEL_PATH)
+    if artifact.get("degree") != degree:
+        raise ValueError("Saved model degree does not match outputs/metrics.json.")
+    if artifact.get("model_features") != list(prepare_features(pd.read_csv(TRAIN_PATH, nrows=1)).columns):
+        raise ValueError("Saved model feature schema is incompatible with this app.")
+    return artifact["fitted_model"]
 
 
 def apply_emoji_price_filter(df: pd.DataFrame, option: str) -> pd.DataFrame:
@@ -88,7 +95,11 @@ except Exception as exc:
     st.error(f"Could not load the training data: {exc}")
     st.stop()
 
-fitted_model = train_selected_model(train_df, selected_degree)
+try:
+    fitted_model = load_selected_model(selected_degree)
+except Exception as exc:
+    st.error(f"Could not load the trained model: {exc}")
+    st.stop()
 
 st.title("🏠 House Price Prediction — Selected Polynomial Regression")
 st.caption(

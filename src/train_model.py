@@ -4,12 +4,16 @@ from pathlib import Path
 import json
 
 import matplotlib.pyplot as plt
+import joblib
+import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
 from modeling import (
     MODEL_FEATURES,
+    RAW_FEATURES,
     TARGET,
+    bootstrap_metric_intervals,
     cross_validate_degrees,
     fit_model,
     outlier_mask,
@@ -22,8 +26,10 @@ from modeling import (
 ROOT = Path(__file__).resolve().parents[1]
 OUTPUTS = ROOT / "outputs"
 FIGURES = OUTPUTS / "figures"
+MODELS = ROOT / "models"
 OUTPUTS.mkdir(parents=True, exist_ok=True)
 FIGURES.mkdir(parents=True, exist_ok=True)
+MODELS.mkdir(parents=True, exist_ok=True)
 
 
 def save_diagnostics(actual: pd.Series, predicted, row_ids: pd.Series) -> None:
@@ -105,6 +111,9 @@ def main() -> None:
         result for result in holdout_comparison if result["degree"] == best_degree
     )
     save_diagnostics(y_valid, holdout_predictions[best_degree], id_valid)
+    holdout_intervals = bootstrap_metric_intervals(
+        y_valid, holdout_predictions[best_degree]
+    )
 
     metrics = {
         "MAE": selected_holdout["MAE"],
@@ -116,6 +125,8 @@ def main() -> None:
         "degree_comparison": degree_comparison,
         "holdout_degree_comparison": holdout_comparison,
         "selection_metric": "CV_RMSE",
+        "holdout_bootstrap_intervals": holdout_intervals,
+        "bootstrap_resamples": 2_000,
         "train_rows_after_outlier_removal": int(len(modeling_train)),
         "validation_rows": int(len(X_valid)),
         "removed_outliers": int(flagged_outliers.sum()),
@@ -133,8 +144,10 @@ def main() -> None:
 
     test_features = prepare_features(test)
     submissions = {}
+    fitted_models = {}
     for degree in (1, 2):
         fitted = fit_model(X, y, degree=degree)
+        fitted_models[degree] = fitted
         test_pred = predict_prices(fitted, test_features)
         submission = pd.DataFrame({"Id": test["Id"], TARGET: test_pred})
         submission.to_csv(OUTPUTS / f"degree_{degree}_submission.csv", index=False)
@@ -142,6 +155,28 @@ def main() -> None:
 
     submission = submissions[best_degree]
     submission.to_csv(OUTPUTS / "polynomial_submission.csv", index=False)
+
+    selected_model = fitted_models[best_degree]
+    feature_names = selected_model[1].get_feature_names_out(MODEL_FEATURES)
+    coefficients = pd.DataFrame(
+        {
+            "feature": feature_names,
+            "standardized_log_price_coefficient": selected_model[3].coef_,
+            "absolute_coefficient": np.abs(selected_model[3].coef_),
+        }
+    ).sort_values("absolute_coefficient", ascending=False)
+    coefficients.to_csv(OUTPUTS / "selected_model_coefficients.csv", index=False)
+
+    artifact = {
+        "degree": best_degree,
+        "raw_features": RAW_FEATURES,
+        "model_features": MODEL_FEATURES,
+        "fitted_model": selected_model,
+    }
+    model_path = MODELS / "selected_polynomial_model.joblib"
+    temporary_path = model_path.with_suffix(".joblib.tmp")
+    joblib.dump(artifact, temporary_path)
+    temporary_path.replace(model_path)
     print(f"Selected degree {best_degree} using lowest five-fold CV RMSE.")
     print(f"Saved selected submission: {OUTPUTS / 'polynomial_submission.csv'}")
 

@@ -25,7 +25,6 @@ Thumbs.db
 
 # Generated model artifacts
 models/*.pkl
-models/*.joblib
 
 # Optional local outputs that can be recreated
 outputs/*.tmp
