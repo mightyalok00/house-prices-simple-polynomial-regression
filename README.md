@@ -110,9 +110,9 @@ house-prices-simple-polynomial-regression/
 │   ├── modeling.py
 │   └── train_model.py
 ├── app.py
-├── .env.example
 ├── .gitignore
 ├── environment.yml
+├── requirements-dev.txt
 ├── requirements.txt
 └── README.md
 ```
@@ -124,13 +124,7 @@ cd D:\House_Prices_Simple_Polynomial_Regression_Cleaned\house-prices-advanced-re
 py -3.11 -m venv .venv
 .venv\Scripts\activate
 python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
-```
-
-Optional local environment file:
-
-```powershell
-copy .env.example .env
+python -m pip install -r requirements-dev.txt
 ```
 
 No secret API key is needed for this project.
@@ -185,5 +179,7 @@ After installing the requirements, launch the interactive prediction app:
 ```powershell
 python -m streamlit run app.py
 ```
+
+Streamlit Community Cloud installs the lean runtime-only `requirements.txt`. Notebook, plotting, and test tools remain isolated in `requirements-dev.txt` for local development and CI.
 
 The app reads the selected degree from `outputs/metrics.json` and trains that polynomial model. It includes the preserved **emoji price filter** (`🌱`, `🏡`, `✨`, `👑`) for exploring comparable training homes. The filter changes only the displayed examples; it does not change or retrain the model.

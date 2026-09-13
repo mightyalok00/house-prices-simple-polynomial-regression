@@ -17,7 +17,7 @@
       ]
     }
   },
-  "updateContentCommand": "python -m pip install --upgrade pip && python -m pip install -r requirements.txt",
+  "updateContentCommand": "python -m pip install --upgrade pip && python -m pip install -r requirements-dev.txt",
   "postAttachCommand": {
     "server": "python -m streamlit run app.py --server.headless true"
   },
