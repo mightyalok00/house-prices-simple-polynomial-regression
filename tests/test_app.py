@@ -2,7 +2,7 @@ from streamlit.testing.v1 import AppTest
 
 
 def test_app_loads_filters_and_predicts():
-    app = AppTest.from_file("../app.py", default_timeout=30).run()
+    app = AppTest.from_file("../streamlit_app.py", default_timeout=30).run()
     assert not app.exception
     app.selectbox[0].select("👑 Luxury — above $400K").run(timeout=30)
     assert not app.exception

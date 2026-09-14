@@ -1,6 +1,6 @@
 # Data Dictionary Guide
 
-The authoritative variable descriptions are in the project-root `data_description.txt`. For this simple model, focus on:
+The authoritative variable descriptions are in `data/data_description.txt`. For this simple model, focus on:
 
 | Column | Role | Meaning |
 |---|---|---|

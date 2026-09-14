@@ -14,7 +14,7 @@ from src.modeling import (
 )
 
 ROOT = Path(__file__).resolve().parent
-TRAIN_PATH = ROOT / "train.csv"
+TRAIN_PATH = ROOT / "data" / "train.csv"
 METRICS_PATH = ROOT / "outputs" / "metrics.json"
 MODEL_PATH = ROOT / "models" / "selected_polynomial_model.joblib"
 
@@ -39,7 +39,7 @@ def load_training_data() -> pd.DataFrame:
     """Load the original Kaggle training data."""
     if not TRAIN_PATH.exists():
         raise FileNotFoundError(
-            f"Missing {TRAIN_PATH}. Keep train.csv in the project root."
+            f"Missing {TRAIN_PATH}. Keep the training data in data/train.csv."
         )
     return pd.read_csv(TRAIN_PATH)
 
@@ -48,7 +48,7 @@ def load_selected_degree() -> int:
     """Read the degree selected by the reproducible training comparison."""
     if not METRICS_PATH.exists():
         raise FileNotFoundError(
-            "Missing outputs/metrics.json. Run python src/train_model.py first."
+            "Missing outputs/metrics.json. Run python -m src.train_model first."
         )
     metrics = json.loads(METRICS_PATH.read_text(encoding="utf-8"))
     degree = int(metrics["best_degree"])

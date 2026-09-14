@@ -15,7 +15,7 @@ from src.modeling import (
 
 
 def test_prepare_features_has_stable_schema():
-    train = pd.read_csv("train.csv", nrows=10)
+    train = pd.read_csv("data/train.csv", nrows=10)
     features = prepare_features(train)
     assert list(features.columns) == MODEL_FEATURES
     assert len(features) == 10
@@ -27,7 +27,7 @@ def test_prepare_features_rejects_missing_columns():
 
 
 def test_degree_one_model_returns_finite_nonnegative_prices():
-    train = pd.read_csv("train.csv", nrows=100)
+    train = pd.read_csv("data/train.csv", nrows=100)
     fitted = fit_model(prepare_features(train), train["SalePrice"], degree=1)
     predictions = predict_prices(fitted, prepare_features(train.head(5)))
     assert predictions.shape == (5,)
@@ -46,7 +46,7 @@ def test_selection_and_bootstrap_are_reproducible():
 
 
 def test_repeated_cv_returns_paired_evidence():
-    train = pd.read_csv("train.csv", nrows=80)
+    train = pd.read_csv("data/train.csv", nrows=80)
     summaries, folds, paired = repeated_cv_comparison(
         prepare_features(train),
         train["SalePrice"],
@@ -60,6 +60,6 @@ def test_repeated_cv_returns_paired_evidence():
 
 
 def test_model_rejects_unsupported_degree():
-    train = pd.read_csv("train.csv", nrows=10)
+    train = pd.read_csv("data/train.csv", nrows=10)
     with pytest.raises(ValueError, match="degrees 1 and 2"):
         fit_model(prepare_features(train), train["SalePrice"], degree=3)

@@ -33,11 +33,18 @@ from src.modeling import (
 )
 
 ROOT = Path(__file__).resolve().parents[1]
+DATA = ROOT / "data"
 OUTPUTS = ROOT / "outputs"
-FIGURES = OUTPUTS / "figures"
+COMPARISONS = OUTPUTS / "comparisons"
+DIAGNOSTICS = OUTPUTS / "diagnostics"
+FIGURES = DIAGNOSTICS / "figures"
+SUBMISSIONS = OUTPUTS / "submissions"
 MODELS = ROOT / "models"
 OUTPUTS.mkdir(parents=True, exist_ok=True)
+COMPARISONS.mkdir(parents=True, exist_ok=True)
+DIAGNOSTICS.mkdir(parents=True, exist_ok=True)
 FIGURES.mkdir(parents=True, exist_ok=True)
+SUBMISSIONS.mkdir(parents=True, exist_ok=True)
 MODELS.mkdir(parents=True, exist_ok=True)
 
 
@@ -48,9 +55,9 @@ def save_diagnostics(actual: pd.Series, predicted, row_ids: pd.Series) -> None:
     )
     residuals["Residual"] = residuals["Actual"] - residuals["Predicted"]
     residuals["AbsoluteError"] = residuals["Residual"].abs()
-    residuals.to_csv(OUTPUTS / "validation_residuals.csv", index=False)
+    residuals.to_csv(DIAGNOSTICS / "validation_residuals.csv", index=False)
     residuals.nlargest(20, "AbsoluteError").to_csv(
-        OUTPUTS / "largest_validation_errors.csv", index=False
+        DIAGNOSTICS / "largest_validation_errors.csv", index=False
     )
 
     plt.figure(figsize=(8, 5))
@@ -77,13 +84,13 @@ def save_diagnostics(actual: pd.Series, predicted, row_ids: pd.Series) -> None:
 
 
 def main() -> None:
-    required = [ROOT / "train.csv", ROOT / "test.csv"]
+    required = [DATA / "train.csv", DATA / "test.csv"]
     missing = [str(path) for path in required if not path.exists()]
     if missing:
         raise FileNotFoundError("Missing required Kaggle file(s): " + ", ".join(missing))
 
-    train = pd.read_csv(ROOT / "train.csv")
-    test = pd.read_csv(ROOT / "test.csv")
+    train = pd.read_csv(DATA / "train.csv")
+    test = pd.read_csv(DATA / "test.csv")
     flagged_outliers = outlier_mask(train)
     modeling_train = train.loc[~flagged_outliers].reset_index(drop=True)
 
@@ -104,10 +111,10 @@ def main() -> None:
     )
     best_degree = select_best_degree(degree_comparison, metric=SELECTION_METRIC)
     pd.DataFrame(degree_comparison).to_csv(
-        OUTPUTS / "degree_comparison.csv", index=False
+        COMPARISONS / "degree_comparison.csv", index=False
     )
     pd.DataFrame(fold_results).to_csv(
-        OUTPUTS / "repeated_cv_fold_results.csv", index=False
+        COMPARISONS / "repeated_cv_fold_results.csv", index=False
     )
 
     holdout_comparison = []
@@ -124,7 +131,7 @@ def main() -> None:
             }
         )
     pd.DataFrame(holdout_comparison).to_csv(
-        OUTPUTS / "holdout_degree_comparison.csv", index=False
+        COMPARISONS / "holdout_degree_comparison.csv", index=False
     )
     selected_holdout = next(
         result for result in holdout_comparison if result["degree"] == best_degree
@@ -174,11 +181,11 @@ def main() -> None:
         fitted_models[degree] = fitted
         test_pred = predict_prices(fitted, test_features)
         submission = pd.DataFrame({"Id": test["Id"], TARGET: test_pred})
-        submission.to_csv(OUTPUTS / f"degree_{degree}_submission.csv", index=False)
+        submission.to_csv(SUBMISSIONS / f"degree_{degree}_submission.csv", index=False)
         submissions[degree] = submission
 
     submission = submissions[best_degree]
-    submission.to_csv(OUTPUTS / "polynomial_submission.csv", index=False)
+    submission.to_csv(SUBMISSIONS / "polynomial_submission.csv", index=False)
 
     selected_model = fitted_models[best_degree]
     feature_names = selected_model[1].get_feature_names_out(MODEL_FEATURES)
@@ -189,7 +196,7 @@ def main() -> None:
             "absolute_coefficient": np.abs(selected_model[3].coef_),
         }
     ).sort_values("absolute_coefficient", ascending=False)
-    coefficients.to_csv(OUTPUTS / "selected_model_coefficients.csv", index=False)
+    coefficients.to_csv(DIAGNOSTICS / "selected_model_coefficients.csv", index=False)
 
     artifact = {
         "degree": best_degree,
@@ -202,7 +209,7 @@ def main() -> None:
     joblib.dump(artifact, temporary_path)
     temporary_path.replace(model_path)
     print(f"Selected degree {best_degree} using lowest repeated-CV RMSE.")
-    print(f"Saved selected submission: {OUTPUTS / 'polynomial_submission.csv'}")
+    print(f"Saved selected submission: {SUBMISSIONS / 'polynomial_submission.csv'}")
 
 
 if __name__ == "__main__":

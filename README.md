@@ -77,39 +77,45 @@ These are local validation results, **not a Kaggle leaderboard score**. The sele
 
 ```text
 house-prices-simple-polynomial-regression/
-├── train.csv
-├── test.csv
-├── sample_submission.csv
-├── data_description.txt
+├── data/
+│   ├── train.csv
+│   ├── test.csv
+│   ├── sample_submission.csv
+│   └── data_description.txt
 ├── docs/
 │   ├── DEEP_PROJECT_ANALYSIS.md
 │   ├── degree_1_vs_degree_2_comparison.pdf
 │   ├── PROJECT_QUESTIONS.md
 │   ├── DATA_DICTIONARY_GUIDE.md
-├── house_price_poly_regression_description_questions.docx
+│   └── project_description_and_questions.docx
 ├── notebooks/
 │   └── House_Prices_Simple_Polynomial_Regression.ipynb
 ├── outputs/
-│   ├── figures/
-│   ├── degree_comparison.csv
-│   ├── holdout_degree_comparison.csv
-│   ├── degree_1_submission.csv
-│   ├── degree_2_submission.csv
-│   ├── largest_validation_errors.csv
+│   ├── comparisons/
+│   │   ├── degree_comparison.csv
+│   │   ├── holdout_degree_comparison.csv
+│   │   └── repeated_cv_fold_results.csv
+│   ├── diagnostics/
+│   │   ├── figures/
+│   │   ├── largest_validation_errors.csv
+│   │   ├── selected_model_coefficients.csv
+│   │   └── validation_residuals.csv
 │   ├── metrics.json
-│   ├── polynomial_submission.csv
-│   ├── repeated_cv_fold_results.csv
-│   ├── selected_model_coefficients.csv
-│   └── validation_residuals.csv
+│   └── submissions/
+│       ├── degree_1_submission.csv
+│       ├── degree_2_submission.csv
+│       └── polynomial_submission.csv
 ├── models/
 │   └── selected_polynomial_model.joblib
 ├── tests/
+│   ├── test_artifacts.py
 │   ├── test_app.py
 │   └── test_modeling.py
 ├── src/
+│   ├── config.py
 │   ├── modeling.py
 │   └── train_model.py
-├── app.py
+├── streamlit_app.py
 ├── .gitignore
 ├── requirements-dev.txt
 ├── requirements.txt
@@ -136,7 +142,7 @@ python -m src.train_model
 
 This trains both degrees, selects the lowest repeated-CV RMSE, and recreates both submissions, the selected submission, metrics, residual diagnostics, and figures in `outputs/`.
 
-It also saves the validated selected model to `models/selected_polynomial_model.joblib`. The Streamlit app loads this artifact rather than retraining during startup. Standardized coefficients are exported to `outputs/selected_model_coefficients.csv` for transparent Degree 1 interpretation.
+It also saves the validated selected model to `models/selected_polynomial_model.joblib`. The Streamlit app loads this artifact rather than retraining during startup. Standardized coefficients are exported to `outputs/diagnostics/selected_model_coefficients.csv` for transparent Degree 1 interpretation.
 
 Run the automated verification suite with:
 
@@ -176,11 +182,11 @@ The raw files come from Kaggle's House Prices competition. Respect Kaggle's data
 After installing the requirements, launch the interactive prediction app:
 
 ```powershell
-python -m streamlit run app.py
+python -m streamlit run streamlit_app.py
 ```
 
 Streamlit Community Cloud installs the lean runtime-only `requirements.txt`. Notebook, plotting, and test tools remain isolated in `requirements-dev.txt` for local development and CI.
 
-For Streamlit Community Cloud, select this repository, the `main` branch, and `app.py` as the entrypoint. The app requires no secrets or additional system packages.
+When you are ready to create the Streamlit Community Cloud app, select this repository, the `main` branch, and `streamlit_app.py` as the entrypoint. The app requires no secrets or additional system packages.
 
-The app reads the selected degree from `outputs/metrics.json` and trains that polynomial model. It includes the preserved **emoji price filter** (`🌱`, `🏡`, `✨`, `👑`) for exploring comparable training homes. The filter changes only the displayed examples; it does not change or retrain the model.
+The app reads the selected degree from `outputs/metrics.json` and loads the validated saved model. It includes the preserved **emoji price filter** (`🌱`, `🏡`, `✨`, `👑`) for exploring comparable training homes. The filter changes only the displayed examples; it does not change or retrain the model.

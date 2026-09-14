@@ -16,7 +16,7 @@ def test_saved_model_matches_metrics_and_schema():
 
 def test_repeated_cv_outputs_are_complete_and_paired():
     metrics = json.loads(open("outputs/metrics.json", encoding="utf-8").read())
-    folds = pd.read_csv("outputs/repeated_cv_fold_results.csv")
+    folds = pd.read_csv("outputs/comparisons/repeated_cv_fold_results.csv")
     assert len(folds) == 50
     assert set(folds["degree"]) == {1, 2}
     assert not folds.duplicated(["degree", "repeat", "fold"]).any()
