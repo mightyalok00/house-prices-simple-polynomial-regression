@@ -157,8 +157,8 @@ with col3:
     )
     bedroom_abv_gr = st.slider(
         "🛏️ Bedrooms above ground",
-        int(train_df["BedroomAbvGr"].min()),
-        int(train_df["BedroomAbvGr"].max()),
+        0,
+        8,
         int(train_df["BedroomAbvGr"].median()),
         key="bedroom_above_ground",
     )
