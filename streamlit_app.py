@@ -24,6 +24,7 @@ APP_INPUT_FEATURES = [
     "GarageCars",
     "TotalBsmtSF",
     "FullBath",
+    "BedroomAbvGr",
     "YearBuilt",
 ]
 
@@ -154,6 +155,13 @@ with col3:
     full_bath = st.slider(
         "🛁 Full bathrooms", 0, 5, int(train_df["FullBath"].median())
     )
+    bedroom_abv_gr = st.slider(
+        "🛏️ Bedrooms above ground",
+        int(train_df["BedroomAbvGr"].min()),
+        int(train_df["BedroomAbvGr"].max()),
+        int(train_df["BedroomAbvGr"].median()),
+        key="bedroom_above_ground",
+    )
     year_built = st.number_input(
         "📅 Year built",
         min_value=1800,
@@ -170,6 +178,7 @@ input_values.update(
         "GarageCars": garage_cars,
         "TotalBsmtSF": total_bsmt_sf,
         "FullBath": full_bath,
+        "BedroomAbvGr": bedroom_abv_gr,
         "YearBuilt": year_built,
     }
 )

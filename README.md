@@ -9,7 +9,7 @@ An end-to-end data science project that predicts residential sale prices using a
 
 **[Launch the House Price Prediction app](https://house-prices-simple-polynomial-regression.streamlit.app/)**
 
-The app provides six intuitive property inputs, an estimated sale price, and an emoji-based price filter for exploring comparable homes. It loads the validated model artifact at startup and does not retrain during user interaction.
+The app provides seven intuitive property inputs—including bedrooms above ground—an estimated sale price, and an emoji-based price filter for exploring comparable homes. It loads the validated model artifact at startup and does not retrain during user interaction.
 
 > **Production model:** Polynomial regression **degree 1**, selected using the lowest RMSE across 25 matched repeated cross-validation splits.
 
