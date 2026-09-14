@@ -63,7 +63,7 @@ def load_selected_model(degree: int):
     if not MODEL_PATH.exists():
         raise FileNotFoundError(
             "Missing models/selected_polynomial_model.joblib. "
-            "Run python src/train_model.py first."
+            "Run python -m src.train_model first."
         )
     artifact = joblib.load(MODEL_PATH)
     if artifact.get("degree") != degree:
@@ -106,6 +106,7 @@ st.caption(
     f"Degree {selected_degree} was selected using the lowest repeated-CV RMSE. "
     "The model uses domain features, median imputation, scaling, and a log-price target."
 )
+st.info(f"Active trained model: polynomial regression degree {selected_degree}")
 
 with st.sidebar:
     st.header("🎛️ App Controls")

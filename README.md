@@ -2,6 +2,8 @@
 
 A clean, beginner-friendly machine-learning portfolio project using the Kaggle **House Prices: Advanced Regression Techniques** dataset. It trains polynomial regression at degrees 1 and 2, compares both fairly, and selects the better-generalizing degree without introducing advanced models.
 
+> **Current trained model:** Polynomial regression **degree 1**. Degree 1 was selected over degree 2 using the lowest RMSE across 25 matched repeated cross-validation splits.
+
 ## Project goal
 Predict `SalePrice` with carefully selected numeric and domain-derived housing features while demonstrating a correct regression workflow: inspect the data, document outlier handling, prevent leakage, compare polynomial degrees, evaluate residuals, and create a Kaggle-format submission.
 
