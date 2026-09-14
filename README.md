@@ -2,6 +2,7 @@
 
 [![Live Streamlit App](https://img.shields.io/badge/Live_App-Open_in_Streamlit-FF4B4B?logo=streamlit&logoColor=white)](https://house-prices-simple-polynomial-regression.streamlit.app/)
 [![Quality checks](https://github.com/mightyalok00/house-prices-simple-polynomial-regression/actions/workflows/quality.yml/badge.svg)](https://github.com/mightyalok00/house-prices-simple-polynomial-regression/actions/workflows/quality.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 An end-to-end data science project that predicts residential sale prices using a deliberately focused polynomial regression workflow. The project compares polynomial degrees 1 and 2 under identical validation conditions, selects the better-generalizing model, and serves predictions through a public Streamlit application.
 
@@ -102,7 +103,8 @@ These coefficients describe associations within the fitted model, not causal eff
 ├── tests/                  # Model, artifact, and Streamlit tests
 ├── streamlit_app.py        # Public application entry point
 ├── requirements.txt        # Runtime dependencies
-└── requirements-dev.txt    # Notebook, plotting, and testing dependencies
+├── requirements-dev.txt    # Notebook, plotting, and testing dependencies
+└── LICENSE                 # MIT license for the project code
 ```
 
 ## Run locally
@@ -163,3 +165,7 @@ This is an educational portfolio project, not a professional property valuation 
 ## Dataset attribution
 
 The data originates from Kaggle's **House Prices: Advanced Regression Techniques** competition. Use and redistribution remain subject to Kaggle's competition and dataset terms.
+
+## License
+
+The project code is available under the [MIT License](LICENSE). The included Kaggle data remains subject to Kaggle's competition and dataset terms.
