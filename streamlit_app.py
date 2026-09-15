@@ -298,7 +298,7 @@ with st.form("prediction_form", border=True):
     submitted = st.form_submit_button(
         "🚀 Predict Sale Price",
         type="primary",
-        use_container_width=True,
+        width="stretch",
     )
 
 input_values = train_df[RAW_FEATURES].median(numeric_only=True).to_dict()
@@ -317,6 +317,7 @@ input_df = pd.DataFrame([input_values], columns=RAW_FEATURES)
 
 if submitted:
     prediction = float(predict_prices(fitted_model, prepare_features(input_df))[0])
+    st.success("Estimated Sale Price")
     st.markdown(
         f"""
         <div class="prediction-card">
