@@ -6,6 +6,14 @@
 
 An end-to-end data science project that predicts residential sale prices using a deliberately focused polynomial regression workflow. The project compares polynomial degrees 1 and 2 under identical validation conditions, selects the better-generalizing model, and serves predictions through a public Streamlit application.
 
+## ⭐ Project highlights
+
+- Focused, reproducible polynomial-regression workflow with matched validation.
+- Transparent degree comparison, diagnostics, and documented model-selection evidence.
+- Public Streamlit application for interactive house-price predictions.
+
+**⭐ If you find the project useful, consider starring the repository.**
+
 ## Live application
 
 **[Launch the House Price Prediction app](https://house-prices-simple-polynomial-regression.streamlit.app/)**
